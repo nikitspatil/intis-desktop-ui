@@ -5,162 +5,113 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class EmployeeView {
 
-    // Style Constants matching MainApp
-    private static final String GLASS_BACKGROUND = "-fx-background-color: linear-gradient(to bottom right, #1a1a2e, #16213e);";
-    private static final String TEXT_STYLE = "-fx-text-fill: white; -fx-font-family: 'Segoe UI';";
-    private static final String INPUT_STYLE = "-fx-background-color: rgba(0,0,0,0.3); -fx-text-fill: white; -fx-prompt-text-fill: #aaa; -fx-background-radius: 5;";
-    private static final String GLASS_BUTTON = "-fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: white; -fx-border-color: rgba(255,255,255,0.3); -fx-border-radius: 5; -fx-background-radius: 5; -fx-cursor: hand;";
-    private static final String TABLE_STYLE =
-            ".table-view { -fx-background-color: transparent; }" +
-                    ".table-view .column-header-background { -fx-background-color: rgba(255,255,255,0.05); }" +
-                    ".table-view .column-header { -fx-background-color: transparent; }" +
-                    ".table-row-cell { -fx-background-color: transparent; -fx-text-background-color: white; -fx-border-color: rgba(255,255,255,0.05); }" +
-                    ".table-row-cell:selected { -fx-background-color: rgba(255,255,255,0.1); }";
+    public static VBox getView(String user, String pass) {
 
-    public static void show(String user, String pass) {
+        Label title = new Label("Employee Management");
+        title.setStyle("-fx-font-size:22px; -fx-font-weight:bold;");
 
         TableView<String[]> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setPrefHeight(520);
 
         TableColumn<String[], String> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()[0]));
+        idCol.setPrefWidth(80);
+        idCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue()[0]));
 
         TableColumn<String[], String> codeCol = new TableColumn<>("Code");
-        codeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()[1]));
+        codeCol.setPrefWidth(150);
+        codeCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue()[1]));
 
         TableColumn<String[], String> nameCol = new TableColumn<>("Name");
-        nameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()[2]));
+        nameCol.setPrefWidth(250);
+        nameCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue()[2]));
 
         TableColumn<String[], String> deptCol = new TableColumn<>("Department");
-        deptCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()[3]));
+        deptCol.setPrefWidth(180);
+        deptCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue()[3]));
 
         table.getColumns().addAll(idCol, codeCol, nameCol, deptCol);
-        loadEmployees(table, user, pass);
-
-        // UI Components
-        Label viewTitle = new Label("EMPLOYEE MANAGEMENT");
-        viewTitle.setStyle(TEXT_STYLE + "-fx-font-size: 18px; -fx-font-weight: bold;");
 
         TextField searchField = new TextField();
-        searchField.setPromptText("Search Name / Code...");
-        searchField.setStyle(INPUT_STYLE + "-fx-pref-height: 35px;");
-        HBox.setHgrow(searchField, Priority.ALWAYS);
+        searchField.setPromptText("Search Name / Code");
+        searchField.setPrefWidth(250);
 
-        Button searchBtn = createStyledButton("Search");
-        Button resetBtn = createStyledButton("Reset");
-        Button addBtn = createStyledButton("Add New Employee");
-        Button editBtn = createStyledButton("Edit Selected");
+        Button searchBtn = new Button("Search");
+        Button refreshBtn = new Button("Refresh");
+        Button addBtn = new Button("Add Employee");
 
-        // Toolbar for search
-        HBox searchBar = new HBox(10, searchField, searchBtn, resetBtn);
-        searchBar.setAlignment(Pos.CENTER);
+        searchBtn.setOnAction(e ->
+                searchEmployees(table, user, pass, searchField.getText()));
 
-        // Action Handlers
-        editBtn.setOnAction(e -> showEditPopup(table, user, pass));
-        searchBtn.setOnAction(e -> searchEmployees(table, user, pass, searchField.getText()));
-        resetBtn.setOnAction(e -> {
-            searchField.clear();
-            table.getItems().clear();
-            loadEmployees(table, user, pass);
-        });
-        addBtn.setOnAction(e -> showAddPopup(user, pass, table));
+        refreshBtn.setOnAction(e ->
+                loadEmployees(table, user, pass));
 
-        // Sidebar for actions
-        VBox sidebar = new VBox(15, viewTitle, new Separator(), addBtn, editBtn);
-        sidebar.setPadding(new Insets(20));
-        sidebar.setPrefWidth(220);
-        sidebar.setStyle("-fx-background-color: rgba(255,255,255,0.03);");
+        addBtn.setOnAction(e ->
+                showAddPopup(user, pass, table));
 
-        // Main Content Area
-        VBox mainContent = new VBox(15, searchBar, table);
-        mainContent.setPadding(new Insets(20));
-        HBox.setHgrow(mainContent, Priority.ALWAYS);
+        HBox toolbar = new HBox(10,
+                searchField,
+                searchBtn,
+                refreshBtn,
+                addBtn
+        );
 
-        HBox layout = new HBox(sidebar, mainContent);
-        layout.setStyle(GLASS_BACKGROUND);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
 
-        Stage stage = new Stage();
-        stage.setTitle("INTIS - Employee Records");
-        Scene scene = new Scene(layout, 950, 550);
+        loadEmployees(table, user, pass);
 
-        // Injecting table CSS directly
-        scene.getStylesheets().add("data:text/css," + TABLE_STYLE.replace(" ", "%20"));
+        VBox root = new VBox(15,
+                title,
+                toolbar,
+                table
+        );
 
-        stage.setScene(scene);
-        stage.show();
+        root.setPadding(new Insets(20));
+
+        return root;
     }
 
-    private static void showEditPopup(TableView<String[]> table, String user, String pass) {
-        String[] selected = table.getSelectionModel().getSelectedItem();
-        if (selected == null) return;
+    private static void showAddPopup(
+            String user,
+            String pass,
+            TableView<String[]> table) {
 
-        Stage popup = new Stage();
-        VBox root = createBasePopup(popup, "Edit Employee");
+        TextField code = new TextField();
+        code.setPromptText("Employee Code");
 
-        TextField code = createPopupField(selected[1], "Employee Code");
-        TextField name = createPopupField(selected[2], "Full Name");
-        TextField dept = createPopupField(selected[3], "Department");
+        TextField name = new TextField();
+        name.setPromptText("Full Name");
 
-        Button save = createStyledButton("Update Record");
+        TextField dept = new TextField();
+        dept.setPromptText("Department");
+
+        Button save = new Button("Save");
         Label status = new Label();
-        status.setStyle(TEXT_STYLE);
 
         save.setOnAction(e -> {
+
             try {
                 var client = java.net.http.HttpClient.newHttpClient();
-                String auth = java.util.Base64.getEncoder().encodeToString((user + ":" + pass).getBytes());
-                String json = String.format("{\"employeeCode\":\"%s\",\"fullName\":\"%s\",\"department\":\"%s\"}",
-                        code.getText(), name.getText(), dept.getText());
 
-                var request = java.net.http.HttpRequest.newBuilder()
-                        .uri(java.net.URI.create("http://localhost:8080/api/employees/" + selected[0]))
-                        .header("Authorization", "Basic " + auth)
-                        .header("Content-Type", "application/json")
-                        .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(json))
-                        .build();
+                String auth = java.util.Base64.getEncoder()
+                        .encodeToString((user + ":" + pass).getBytes());
 
-                var response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-                if (response.statusCode() == 200) {
-                    table.getItems().clear();
-                    loadEmployees(table, user, pass);
-                    popup.close();
-                } else {
-                    status.setText("Update failed");
-                }
-            } catch (Exception ex) { status.setText("Connection Error"); }
-        });
-
-        root.getChildren().addAll(new Label("Editing ID: " + selected[0]), code, name, dept, save, status);
-        popup.show();
-    }
-
-    private static void showAddPopup(String user, String pass, TableView<String[]> table) {
-        Stage popup = new Stage();
-        VBox root = createBasePopup(popup, "New Employee");
-
-        TextField code = createPopupField("", "Employee Code");
-        TextField name = createPopupField("", "Full Name");
-        TextField dept = createPopupField("", "Department");
-
-        Button save = createStyledButton("Save Employee");
-        Label status = new Label();
-        status.setStyle(TEXT_STYLE);
-
-        save.setOnAction(e -> {
-            try {
-                var client = java.net.http.HttpClient.newHttpClient();
-                String auth = java.util.Base64.getEncoder().encodeToString((user + ":" + pass).getBytes());
-                String json = String.format("{\"employeeCode\":\"%s\",\"fullName\":\"%s\",\"department\":\"%s\"}",
-                        code.getText(), name.getText(), dept.getText());
+                String json =
+                        "{"
+                                + "\"employeeCode\":\"" + code.getText() + "\","
+                                + "\"fullName\":\"" + name.getText() + "\","
+                                + "\"department\":\"" + dept.getText() + "\""
+                                + "}";
 
                 var request = java.net.http.HttpRequest.newBuilder()
                         .uri(java.net.URI.create("http://localhost:8080/api/employees"))
@@ -169,78 +120,140 @@ public class EmployeeView {
                         .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json))
                         .build();
 
-                var response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-                if (response.statusCode() == 200) {
-                    table.getItems().clear();
+                var response = client.send(
+                        request,
+                        java.net.http.HttpResponse.BodyHandlers.ofString()
+                );
+
+                if (response.statusCode() == 200 ||
+                        response.statusCode() == 201) {
+
+                    status.setText("Saved successfully");
                     loadEmployees(table, user, pass);
-                    popup.close();
-                } else { status.setText("Save failed"); }
-            } catch (Exception ex) { status.setText("Error"); }
+
+                } else {
+                    status.setText("Save failed");
+                }
+
+            } catch (Exception ex) {
+                status.setText("Error");
+            }
         });
 
-        root.getChildren().addAll(code, name, dept, save, status);
+        VBox box = new VBox(10,
+                code,
+                name,
+                dept,
+                save,
+                status
+        );
+
+        box.setPadding(new Insets(20));
+        box.setAlignment(Pos.CENTER);
+
+        Stage popup = new Stage();
+        popup.setTitle("Add Employee");
+        popup.setScene(new javafx.scene.Scene(box, 320, 280));
         popup.show();
     }
 
-    // --- Modern Helper Methods ---
+    private static void loadEmployees(
+            TableView<String[]> table,
+            String user,
+            String pass) {
 
-    private static Button createStyledButton(String text) {
-        Button btn = new Button(text);
-        btn.setStyle(GLASS_BUTTON);
-        btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setPadding(new Insets(8, 15, 8, 15));
-        btn.setOnMouseEntered(e -> btn.setStyle(GLASS_BUTTON + "-fx-background-color: rgba(255,255,255,0.2);"));
-        btn.setOnMouseExited(e -> btn.setStyle(GLASS_BUTTON));
-        return btn;
-    }
-
-    private static TextField createPopupField(String text, String prompt) {
-        TextField tf = new TextField(text);
-        tf.setPromptText(prompt);
-        tf.setStyle(INPUT_STYLE + "-fx-pref-height: 35px;");
-        return tf;
-    }
-
-    private static VBox createBasePopup(Stage stage, String title) {
-        VBox root = new VBox(15);
-        root.setPadding(new Insets(25));
-        root.setStyle(GLASS_BACKGROUND);
-        root.setAlignment(Pos.CENTER);
-        stage.setTitle(title);
-        stage.setScene(new Scene(root, 350, 400));
-        return root;
-    }
-
-    private static void searchEmployees(TableView<String[]> table, String user, String pass, String keyword) {
         table.getItems().clear();
-        executeFetch(table, user, pass, "http://localhost:8080/api/employees/search?keyword=" + keyword);
-    }
 
-    private static void loadEmployees(TableView<String[]> table, String user, String pass) {
-        executeFetch(table, user, pass, "http://localhost:8080/api/employees");
-    }
-
-    private static void executeFetch(TableView<String[]> table, String user, String pass, String url) {
         try {
             var client = java.net.http.HttpClient.newHttpClient();
-            String auth = java.util.Base64.getEncoder().encodeToString((user + ":" + pass).getBytes());
+
+            String auth = java.util.Base64.getEncoder()
+                    .encodeToString((user + ":" + pass).getBytes());
+
             var request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create(url))
+                    .uri(java.net.URI.create("http://localhost:8080/api/employees"))
                     .header("Authorization", "Basic " + auth)
-                    .GET().build();
+                    .GET()
+                    .build();
 
-            var response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode data = mapper.readTree(response.body()).get("data");
+            var response = client.send(
+                    request,
+                    java.net.http.HttpResponse.BodyHandlers.ofString()
+            );
 
-            for (JsonNode emp : data) {
-                table.getItems().add(new String[]{
-                        emp.get("id").asText(),
-                        emp.get("employeeCode").asText(),
-                        emp.get("fullName").asText(),
-                        emp.get("department").asText()
-                });
+            fillTable(table, response.body());
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private static void searchEmployees(
+            TableView<String[]> table,
+            String user,
+            String pass,
+            String keyword) {
+
+        table.getItems().clear();
+
+        try {
+            var client = java.net.http.HttpClient.newHttpClient();
+
+            String auth = java.util.Base64.getEncoder()
+                    .encodeToString((user + ":" + pass).getBytes());
+
+            var request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(
+                            "http://localhost:8080/api/employees/search?keyword=" + keyword))
+                    .header("Authorization", "Basic " + auth)
+                    .GET()
+                    .build();
+
+            var response = client.send(
+                    request,
+                    java.net.http.HttpResponse.BodyHandlers.ofString()
+            );
+
+            fillTable(table, response.body());
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private static void fillTable(
+            TableView<String[]> table,
+            String json) throws Exception {
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(json);
+
+        JsonNode rows = null;
+
+        if (root.isArray()) {
+            rows = root;
+        } else if (root.has("data")) {
+            rows = root.get("data");
+
+            if (rows != null && rows.has("content")) {
+                rows = rows.get("content");
             }
-        } catch (Exception ex) { ex.printStackTrace(); }
+        } else if (root.has("content")) {
+            rows = root.get("content");
+        }
+
+        if (rows == null || !rows.isArray()) {
+            return;
+        }
+
+        for (JsonNode emp : rows) {
+
+            table.getItems().add(new String[]{
+                    emp.path("id").asText(),
+                    emp.path("employeeCode").asText(),
+                    emp.path("fullName").asText(),
+                    emp.path("department").asText()
+            });
+        }
     }
 }
