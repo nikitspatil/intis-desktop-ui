@@ -74,7 +74,9 @@ public class AppShell {
         // --- SECTION 5: NAVIGATION LOGIC (EVENT HANDLERS) ---
 
         dashboardBtn.setOnAction(e ->
-                content.getChildren().setAll(new Label("Dashboard Page Content")));
+                content.getChildren().setAll(
+                        DashboardView.getView(username, password)
+                ));
 
         employeesBtn.setOnAction(e ->
                 content.getChildren().setAll(
@@ -90,10 +92,14 @@ public class AppShell {
                 content.getChildren().setAll(new Label("Files Management Page")));
 
         presenceBtn.setOnAction(e ->
-                content.getChildren().setAll(new Label("Employee Presence/Attendance")));
+                content.getChildren().setAll(
+                        PresenceView.getView(username, password)
+                ));
 
         auditBtn.setOnAction(e ->
-                content.getChildren().setAll(new Label("System Audit Logs")));
+                content.getChildren().setAll(
+                        AuditView.getView(username, password)
+                ));
 
         logoutBtn.setOnAction(e ->
                 stage.close()); // Logic to close and potentially return to LoginView
