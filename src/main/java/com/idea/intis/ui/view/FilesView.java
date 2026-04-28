@@ -14,46 +14,75 @@ import javafx.stage.Stage;
 
 /*
  ==========================================================
- EmployeeView.java
+ FilesView.java
 
- Responsibility:
- - Show Employees page inside AppShell
- - Load employee list from backend
- - Search employees
- - Add employee popup
- - Controlled Branch dropdown (Pune / Mumbai)
+ Purpose:
+ Design Document Revision Module
+
+ This is NOT generic file storage.
+
+ Used For:
+ - Design documents
+ - API docs
+ - UI wireframes
+ - Architecture revisions
+ - Task linked revisions
 
  APIs Used:
- GET  /api/employees
- GET  /api/employees/search?keyword=
- POST /api/employees
+ POST /api/files
+ GET  /api/files/task/{taskId}
  ==========================================================
 */
 
-public class EmployeeView {
+public class FilesView {
 
     /*
      ======================================================
-     Main Employees Page
-     Called from AppShell
+     Main Page
+     Called from AppShell when Files menu clicked
      ======================================================
     */
     public static VBox getView(String user, String pass) {
 
-        /* ---------------- Page Title ---------------- */
-        Label title = new Label("Employee Management");
+        /* ---------------- Title ---------------- */
+        Label title =
+                new Label("Design Revisions");
+
         title.setStyle(
                 "-fx-font-size:22px;" +
                         "-fx-font-weight:bold;"
         );
 
-        /* ---------------- Employee Table ---------------- */
+        /*
+         ------------------------------------------
+         Task ID Search Section
+         User enters task id to load revisions
+         ------------------------------------------
+        */
+        TextField taskIdField =
+                new TextField();
+
+        taskIdField.setPromptText(
+                "Enter Task ID"
+        );
+
+        taskIdField.setPrefWidth(160);
+
+        Button loadBtn =
+                new Button("Load");
+
+        Button addBtn =
+                new Button("Add Revision");
+
+        /* ---------------- Table ---------------- */
         TableView<String[]> table =
                 new TableView<>();
 
         table.setPrefHeight(520);
 
-        /* Employee ID */
+        /*
+         Column 1 : Revision ID
+        */
         TableColumn<String[], String> idCol =
                 new TableColumn<>("ID");
 
@@ -64,108 +93,128 @@ public class EmployeeView {
                         data.getValue()[0]
                 ));
 
-        /* Employee Code */
-        TableColumn<String[], String> codeCol =
-                new TableColumn<>("Code");
+        /*
+         Column 2 : File Name
+        */
+        TableColumn<String[], String> fileCol =
+                new TableColumn<>("File Name");
 
-        codeCol.setPrefWidth(140);
+        fileCol.setPrefWidth(220);
 
-        codeCol.setCellValueFactory(data ->
+        fileCol.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue()[1]
                 ));
 
-        /* Full Name */
-        TableColumn<String[], String> nameCol =
-                new TableColumn<>("Name");
+        /*
+         Column 3 : Revision Number
+        */
+        TableColumn<String[], String> revCol =
+                new TableColumn<>("Revision");
 
-        nameCol.setPrefWidth(220);
+        revCol.setPrefWidth(120);
 
-        nameCol.setCellValueFactory(data ->
+        revCol.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue()[2]
                 ));
 
-        /* Department */
-        TableColumn<String[], String> deptCol =
-                new TableColumn<>("Department");
+        /*
+         Column 4 : Remarks
+        */
+        TableColumn<String[], String> remarksCol =
+                new TableColumn<>("Remarks");
 
-        deptCol.setPrefWidth(180);
+        remarksCol.setPrefWidth(260);
 
-        deptCol.setCellValueFactory(data ->
+        remarksCol.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue()[3]
                 ));
 
-        /* Branch */
-        TableColumn<String[], String> branchCol =
-                new TableColumn<>("Branch");
+        /*
+         Column 5 : Uploaded Time
+        */
+        TableColumn<String[], String> timeCol =
+                new TableColumn<>("Uploaded At");
 
-        branchCol.setPrefWidth(150);
+        timeCol.setPrefWidth(220);
 
-        branchCol.setCellValueFactory(data ->
+        timeCol.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue()[4]
                 ));
 
         table.getColumns().addAll(
                 idCol,
-                codeCol,
-                nameCol,
-                deptCol,
-                branchCol
+                fileCol,
+                revCol,
+                remarksCol,
+                timeCol
         );
 
-        /* ---------------- Search Controls ---------------- */
-        TextField searchField =
-                new TextField();
+        /*
+         ------------------------------------------
+         Load Revisions by Task ID
+         ------------------------------------------
+        */
+        loadBtn.setOnAction(e -> {
 
-        searchField.setPromptText(
-                "Search Name / Code"
-        );
+            String taskId =
+                    taskIdField.getText()
+                            .trim();
 
-        searchField.setPrefWidth(220);
+            if (!taskId.isEmpty()) {
 
-        Button searchBtn =
-                new Button("Search");
-
-        Button refreshBtn =
-                new Button("Refresh");
-
-        Button addBtn =
-                new Button("Add Employee");
-
-        /* Search employee */
-        searchBtn.setOnAction(e ->
-                searchEmployees(
+                loadRevisions(
                         table,
                         user,
                         pass,
-                        searchField.getText()
-                ));
+                        taskId
+                );
+            }
+        });
 
-        /* Reload all employees */
-        refreshBtn.setOnAction(e ->
-                loadEmployees(
-                        table,
-                        user,
-                        pass
-                ));
+        /*
+         ------------------------------------------
+         Add Revision Popup
+         ------------------------------------------
+        */
+        addBtn.setOnAction(e -> {
 
-        /* Open Add Employee popup */
-        addBtn.setOnAction(e ->
-                showAddPopup(
-                        user,
-                        pass,
-                        table
-                ));
+            String taskId =
+                    taskIdField.getText().trim();
+
+            if (taskId.isEmpty()) {
+
+                Alert alert =
+                        new Alert(
+                                Alert.AlertType.WARNING
+                        );
+
+                alert.setTitle("Task Required");
+                alert.setHeaderText(null);
+                alert.setContentText(
+                        "Enter Task ID first."
+                );
+
+                alert.show();
+                return;
+            }
+
+            showAddPopup(
+                    user,
+                    pass,
+                    taskId,
+                    table
+            );
+        });
 
         HBox toolbar =
                 new HBox(
                         10,
-                        searchField,
-                        searchBtn,
-                        refreshBtn,
+                        taskIdField,
+                        loadBtn,
                         addBtn
                 );
 
@@ -173,10 +222,6 @@ public class EmployeeView {
                 Pos.CENTER_LEFT
         );
 
-        /* Load employees on page open */
-        loadEmployees(table, user, pass);
-
-        /* ---------------- Final Layout ---------------- */
         VBox root =
                 new VBox(
                         15,
@@ -194,66 +239,53 @@ public class EmployeeView {
 
     /*
      ======================================================
-     Add Employee Popup
-     Controlled Branch Dropdown:
-     Pune / Mumbai
+     Add Revision Popup
      ======================================================
     */
     private static void showAddPopup(
             String user,
             String pass,
+            String taskId,
             TableView<String[]> table) {
 
-        /* Employee Code */
-        TextField codeField =
+        TextField fileNameField =
                 new TextField();
 
-        codeField.setPromptText(
-                "Employee Code"
+        fileNameField.setPromptText(
+                "File Name"
         );
 
-        /* Full Name */
-        TextField nameField =
+        TextField revisionField =
                 new TextField();
 
-        nameField.setPromptText(
-                "Full Name"
+        revisionField.setPromptText(
+                "Revision No (R1 / V2)"
         );
 
-        /* Department */
-        TextField deptField =
+        TextField pathField =
                 new TextField();
 
-        deptField.setPromptText(
-                "Department"
+        pathField.setPromptText(
+                "File Path"
         );
 
-        /*
-         ----------------------------------------------
-         Controlled Branch Dropdown
-         Only allowed values:
-         Pune / Mumbai
-         ----------------------------------------------
-        */
-        ComboBox<String> branchBox =
-                new ComboBox<>();
+        TextArea remarksField =
+                new TextArea();
 
-        branchBox.getItems().addAll(
-                "Pune",
-                "Mumbai"
+        remarksField.setPromptText(
+                "Remarks"
         );
 
-        branchBox.setValue("Pune");
-        branchBox.setPrefWidth(260);
+        remarksField.setPrefHeight(90);
 
         Button saveBtn =
-                new Button("Save");
+                new Button("Save Revision");
 
         Label status =
                 new Label();
 
         /*
-         Save Employee Button Action
+         Save Revision Action
         */
         saveBtn.setOnAction(e -> {
 
@@ -271,32 +303,36 @@ public class EmployeeView {
                                 );
 
                 /*
-                 JSON body sent to backend
+                 JSON body
                 */
                 String json =
                         "{"
-                                + "\"employeeCode\":\""
-                                + codeField.getText()
+                                + "\"fileName\":\""
+                                + fileNameField.getText()
                                 + "\","
 
-                                + "\"fullName\":\""
-                                + nameField.getText()
+                                + "\"revisionNo\":\""
+                                + revisionField.getText()
                                 + "\","
 
-                                + "\"department\":\""
-                                + deptField.getText()
+                                + "\"filePath\":\""
+                                + pathField.getText()
                                 + "\","
 
-                                + "\"branch\":\""
-                                + branchBox.getValue()
-                                + "\""
+                                + "\"remarks\":\""
+                                + remarksField.getText()
+                                + "\","
+
+                                + "\"taskId\":"
+                                + Long.parseLong(taskId)
+
                                 + "}";
 
                 var request =
                         java.net.http.HttpRequest
                                 .newBuilder()
                                 .uri(java.net.URI.create(ApiConfig.BASE_URL +
-                                        "/api/employees"))
+                                        "/api/files"))
                                 .header(
                                         "Authorization",
                                         "Basic " + auth
@@ -324,14 +360,14 @@ public class EmployeeView {
                         || response.statusCode() == 201) {
 
                     status.setText(
-                            "Employee Saved"
+                            "Revision Saved"
                     );
 
-                    /* Refresh employee table */
-                    loadEmployees(
+                    loadRevisions(
                             table,
                             user,
-                            pass
+                            pass,
+                            taskId
                     );
 
                 } else {
@@ -349,14 +385,13 @@ public class EmployeeView {
             }
         });
 
-        /* Popup Layout */
         VBox root =
                 new VBox(
                         12,
-                        codeField,
-                        nameField,
-                        deptField,
-                        branchBox,
+                        fileNameField,
+                        revisionField,
+                        pathField,
+                        remarksField,
                         saveBtn,
                         status
                 );
@@ -373,11 +408,11 @@ public class EmployeeView {
                 new Stage();
 
         popup.setTitle(
-                "Add Employee"
+                "Add Revision"
         );
 
         popup.setScene(
-                new Scene(root, 360, 380)
+                new Scene(root, 380, 430)
         );
 
         popup.show();
@@ -385,69 +420,14 @@ public class EmployeeView {
 
     /*
      ======================================================
-     Load All Employees
+     Load Revisions by Task ID
      ======================================================
     */
-    private static void loadEmployees(
-            TableView<String[]> table,
-            String user,
-            String pass) {
-
-        table.getItems().clear();
-
-        try {
-            var client =
-                    java.net.http.HttpClient
-                            .newHttpClient();
-
-            String auth =
-                    java.util.Base64
-                            .getEncoder()
-                            .encodeToString(
-                                    (user + ":" + pass)
-                                            .getBytes()
-                            );
-
-            var request =
-                    java.net.http.HttpRequest
-                            .newBuilder()
-                            .uri(java.net.URI.create(ApiConfig.BASE_URL +
-                                    "/api/employees"))
-                            .header(
-                                    "Authorization",
-                                    "Basic " + auth
-                            )
-                            .GET()
-                            .build();
-
-            var response =
-                    client.send(
-                            request,
-                            java.net.http.HttpResponse
-                                    .BodyHandlers
-                                    .ofString()
-                    );
-
-            fillTable(
-                    table,
-                    response.body()
-            );
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    /*
-     ======================================================
-     Search Employees
-     ======================================================
-    */
-    private static void searchEmployees(
+    private static void loadRevisions(
             TableView<String[]> table,
             String user,
             String pass,
-            String keyword) {
+            String taskId) {
 
         table.getItems().clear();
 
@@ -468,8 +448,8 @@ public class EmployeeView {
                     java.net.http.HttpRequest
                             .newBuilder()
                             .uri(java.net.URI.create(ApiConfig.BASE_URL +
-                                    "/api/employees/search?keyword="
-                                            + keyword))
+                                    "/api/files/task/"
+                                            + taskId))
                             .header(
                                     "Authorization",
                                     "Basic " + auth
@@ -497,7 +477,7 @@ public class EmployeeView {
 
     /*
      ======================================================
-     Convert JSON response into table rows
+     Convert JSON into table rows
      ======================================================
     */
     private static void fillTable(
@@ -521,15 +501,15 @@ public class EmployeeView {
             return;
         }
 
-        for (JsonNode emp : rows) {
+        for (JsonNode row : rows) {
 
             table.getItems().add(
                     new String[]{
-                            emp.path("id").asText(),
-                            emp.path("employeeCode").asText(),
-                            emp.path("fullName").asText(),
-                            emp.path("department").asText(),
-                            emp.path("branch").asText()
+                            row.path("id").asText(),
+                            row.path("fileName").asText(),
+                            row.path("revisionNo").asText(),
+                            row.path("remarks").asText(),
+                            row.path("uploadedAt").asText()
                     }
             );
         }

@@ -2,6 +2,7 @@ package com.idea.intis.ui.view;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.idea.intis.ui.config.ApiConfig;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -99,8 +100,8 @@ public class AuditView {
             var request =
                     java.net.http.HttpRequest
                             .newBuilder()
-                            .uri(java.net.URI.create(
-                                    "http://localhost:8080/api/audit/logs"))
+                            .uri(java.net.URI.create(ApiConfig.BASE_URL +
+                                    "/api/audit/logs"))
                             .header(
                                     "Authorization",
                                     "Basic " + auth

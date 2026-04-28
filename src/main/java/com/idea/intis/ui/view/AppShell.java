@@ -89,7 +89,9 @@ public class AppShell {
                 ));
 
         filesBtn.setOnAction(e ->
-                content.getChildren().setAll(new Label("Files Management Page")));
+                content.getChildren().setAll(
+                        FilesView.getView(username, password)
+                ));
 
         presenceBtn.setOnAction(e ->
                 content.getChildren().setAll(

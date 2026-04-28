@@ -1,5 +1,6 @@
 package com.idea.intis.ui.view;
 
+import com.idea.intis.ui.config.ApiConfig;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -109,8 +110,8 @@ public class LoginView {
                    http://localhost:8080/api/auth/me
                    ----------------------------------------- */
                 var request = java.net.http.HttpRequest.newBuilder()
-                        .uri(java.net.URI.create(
-                                "http://localhost:8080/api/auth/me"))
+                        .uri(java.net.URI.create(ApiConfig.BASE_URL +
+                                "/api/auth/me"))
                         .header("Authorization", "Basic " + auth)
                         .GET()
                         .build();

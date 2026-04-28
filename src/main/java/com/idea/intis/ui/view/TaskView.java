@@ -2,6 +2,7 @@ package com.idea.intis.ui.view;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.idea.intis.ui.config.ApiConfig;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -239,8 +240,8 @@ public class TaskView {
                 var request =
                         java.net.http.HttpRequest
                                 .newBuilder()
-                                .uri(java.net.URI.create(
-                                        "http://localhost:8080/api/tasks"))
+                                .uri(java.net.URI.create(ApiConfig.BASE_URL +
+                                        "/api/tasks"))
                                 .header(
                                         "Authorization",
                                         "Basic " + auth
@@ -367,8 +368,8 @@ public class TaskView {
                 var request =
                         java.net.http.HttpRequest
                                 .newBuilder()
-                                .uri(java.net.URI.create(
-                                        "http://localhost:8080/api/tasks/"
+                                .uri(java.net.URI.create(ApiConfig.BASE_URL +
+                                        "/api/tasks/"
                                                 + selected[0]
                                                 + "/status?status="
                                                 + statusBox.getValue()
@@ -460,8 +461,8 @@ public class TaskView {
             var request =
                     java.net.http.HttpRequest
                             .newBuilder()
-                            .uri(java.net.URI.create(
-                                    "http://localhost:8080/api/employees"))
+                            .uri(java.net.URI.create(ApiConfig.BASE_URL +
+                                    "/api/employees"))
                             .header(
                                     "Authorization",
                                     "Basic " + auth
@@ -540,8 +541,8 @@ public class TaskView {
             var request =
                     java.net.http.HttpRequest
                             .newBuilder()
-                            .uri(java.net.URI.create(
-                                    "http://localhost:8080/api/tasks"))
+                            .uri(java.net.URI.create(ApiConfig.BASE_URL +
+                                    "/api/tasks"))
                             .header(
                                     "Authorization",
                                     "Basic " + auth

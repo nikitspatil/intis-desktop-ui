@@ -2,6 +2,7 @@ package com.idea.intis.ui.view;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.idea.intis.ui.config.ApiConfig;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.property.SimpleStringProperty;
@@ -239,8 +240,8 @@ public class PresenceView {
             var request =
                     java.net.http.HttpRequest
                             .newBuilder()
-                            .uri(java.net.URI.create(
-                                    "http://localhost:8080/api/presence/status"))
+                            .uri(java.net.URI.create(ApiConfig.BASE_URL +
+                                    "/api/presence/status"))
                             .header(
                                     "Authorization",
                                     "Basic " + auth

@@ -2,6 +2,7 @@ package com.idea.intis.ui.view;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.idea.intis.ui.config.ApiConfig;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
@@ -186,8 +187,8 @@ public class DashboardView {
             var request =
                     java.net.http.HttpRequest
                             .newBuilder()
-                            .uri(java.net.URI.create(
-                                    "http://localhost:8080/api/dashboard/summary"))
+                            .uri(java.net.URI.create(ApiConfig.BASE_URL +
+                                    "/api/dashboard/summary"))
                             .header(
                                     "Authorization",
                                     "Basic " + auth
