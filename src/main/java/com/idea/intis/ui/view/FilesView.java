@@ -3,6 +3,8 @@ package com.idea.intis.ui.view;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.idea.intis.ui.config.ApiConfig;
+import com.idea.intis.ui.service.ApiClient;
+import com.idea.intis.ui.util.AlertUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -287,24 +289,24 @@ public class FilesView {
         /*
          Save Revision Action
         */
+        /* ==========================================================
+   FILESVIEW.java
+   ONLY replace save button action inside showAddPopup()
+   ========================================================== */
+
         saveBtn.setOnAction(e -> {
 
             try {
-                var client =
-                        java.net.http.HttpClient
-                                .newHttpClient();
 
-                String auth =
-                        java.util.Base64
-                                .getEncoder()
-                                .encodeToString(
-                                        (user + ":" + pass)
-                                                .getBytes()
-                                );
+                boolean yes =
+                        AlertUtil.confirm(
+                                "Save new revision?"
+                        );
 
-                /*
-                 JSON body
-                */
+                if (!yes) {
+                    return;
+                }
+
                 String json =
                         "{"
                                 + "\"fileName\":\""
@@ -325,62 +327,30 @@ public class FilesView {
 
                                 + "\"taskId\":"
                                 + Long.parseLong(taskId)
-
                                 + "}";
 
-                var request =
-                        java.net.http.HttpRequest
-                                .newBuilder()
-                                .uri(java.net.URI.create(ApiConfig.BASE_URL +
-                                        "/api/files"))
-                                .header(
-                                        "Authorization",
-                                        "Basic " + auth
-                                )
-                                .header(
-                                        "Content-Type",
-                                        "application/json"
-                                )
-                                .POST(
-                                        java.net.http.HttpRequest
-                                                .BodyPublishers
-                                                .ofString(json)
-                                )
-                                .build();
+                ApiClient.post(
+                        "/api/files",
+                        json,
+                        user,
+                        pass
+                );
 
-                var response =
-                        client.send(
-                                request,
-                                java.net.http.HttpResponse
-                                        .BodyHandlers
-                                        .ofString()
-                        );
+                AlertUtil.success(
+                        "Revision saved successfully."
+                );
 
-                if (response.statusCode() == 200
-                        || response.statusCode() == 201) {
-
-                    status.setText(
-                            "Revision Saved"
-                    );
-
-                    loadRevisions(
-                            table,
-                            user,
-                            pass,
-                            taskId
-                    );
-
-                } else {
-
-                    status.setText(
-                            "Save Failed"
-                    );
-                }
+                loadRevisions(
+                        table,
+                        user,
+                        pass,
+                        taskId
+                );
 
             } catch (Exception ex) {
 
-                status.setText(
-                        "Error"
+                AlertUtil.error(
+                        "Unable to save revision."
                 );
             }
         });

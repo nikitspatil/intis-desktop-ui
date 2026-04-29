@@ -2,7 +2,8 @@ package com.idea.intis.ui.view;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.idea.intis.ui.config.ApiConfig;
+import com.idea.intis.ui.service.ApiClient;
+import com.idea.intis.ui.util.AlertUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,13 +18,14 @@ import javafx.stage.Stage;
  EmployeeView.java
 
  Responsibility:
- - Show Employees page inside AppShell
- - Load employee list from backend
+ - Show Employees screen
+ - Load employee list
  - Search employees
  - Add employee popup
- - Controlled Branch dropdown (Pune / Mumbai)
+ - Controlled branch dropdown
+ - Uses central ApiClient
 
- APIs Used:
+ APIs:
  GET  /api/employees
  GET  /api/employees/search?keyword=
  POST /api/employees
@@ -35,47 +37,56 @@ public class EmployeeView {
     /*
      ======================================================
      Main Employees Page
-     Called from AppShell
      ======================================================
     */
-    public static VBox getView(String user, String pass) {
+    public static VBox getView(
+            String user,
+            String pass) {
 
-        /* ---------------- Page Title ---------------- */
-        Label title = new Label("Employee Management");
+        /* ---------------- Title ---------------- */
+        Label title =
+                new Label("Employee Management");
+
         title.setStyle(
                 "-fx-font-size:22px;" +
                         "-fx-font-weight:bold;"
         );
 
-        /* ---------------- Employee Table ---------------- */
+        /* ---------------- Table ---------------- */
         TableView<String[]> table =
                 new TableView<>();
 
         table.setPrefHeight(520);
 
-        /* Employee ID */
+        /*
+         Column 1 : ID
+        */
         TableColumn<String[], String> idCol =
                 new TableColumn<>("ID");
 
-        idCol.setPrefWidth(80);
+        idCol.setPrefWidth(70);
 
         idCol.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue()[0]
                 ));
 
-        /* Employee Code */
+        /*
+         Column 2 : Code
+        */
         TableColumn<String[], String> codeCol =
                 new TableColumn<>("Code");
 
-        codeCol.setPrefWidth(140);
+        codeCol.setPrefWidth(130);
 
         codeCol.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue()[1]
                 ));
 
-        /* Full Name */
+        /*
+         Column 3 : Full Name
+        */
         TableColumn<String[], String> nameCol =
                 new TableColumn<>("Name");
 
@@ -86,7 +97,9 @@ public class EmployeeView {
                         data.getValue()[2]
                 ));
 
-        /* Department */
+        /*
+         Column 4 : Department
+        */
         TableColumn<String[], String> deptCol =
                 new TableColumn<>("Department");
 
@@ -97,7 +110,9 @@ public class EmployeeView {
                         data.getValue()[3]
                 ));
 
-        /* Branch */
+        /*
+         Column 5 : Branch
+        */
         TableColumn<String[], String> branchCol =
                 new TableColumn<>("Branch");
 
@@ -135,7 +150,9 @@ public class EmployeeView {
         Button addBtn =
                 new Button("Add Employee");
 
-        /* Search employee */
+        /*
+         Search Employee
+        */
         searchBtn.setOnAction(e ->
                 searchEmployees(
                         table,
@@ -144,7 +161,9 @@ public class EmployeeView {
                         searchField.getText()
                 ));
 
-        /* Reload all employees */
+        /*
+         Refresh All Employees
+        */
         refreshBtn.setOnAction(e ->
                 loadEmployees(
                         table,
@@ -152,7 +171,9 @@ public class EmployeeView {
                         pass
                 ));
 
-        /* Open Add Employee popup */
+        /*
+         Add Employee Popup
+        */
         addBtn.setOnAction(e ->
                 showAddPopup(
                         user,
@@ -173,10 +194,13 @@ public class EmployeeView {
                 Pos.CENTER_LEFT
         );
 
-        /* Load employees on page open */
-        loadEmployees(table, user, pass);
+        /* First Load */
+        loadEmployees(
+                table,
+                user,
+                pass
+        );
 
-        /* ---------------- Final Layout ---------------- */
         VBox root =
                 new VBox(
                         15,
@@ -195,8 +219,6 @@ public class EmployeeView {
     /*
      ======================================================
      Add Employee Popup
-     Controlled Branch Dropdown:
-     Pune / Mumbai
      ======================================================
     */
     private static void showAddPopup(
@@ -204,7 +226,6 @@ public class EmployeeView {
             String pass,
             TableView<String[]> table) {
 
-        /* Employee Code */
         TextField codeField =
                 new TextField();
 
@@ -212,7 +233,6 @@ public class EmployeeView {
                 "Employee Code"
         );
 
-        /* Full Name */
         TextField nameField =
                 new TextField();
 
@@ -220,7 +240,6 @@ public class EmployeeView {
                 "Full Name"
         );
 
-        /* Department */
         TextField deptField =
                 new TextField();
 
@@ -229,11 +248,7 @@ public class EmployeeView {
         );
 
         /*
-         ----------------------------------------------
          Controlled Branch Dropdown
-         Only allowed values:
-         Pune / Mumbai
-         ----------------------------------------------
         */
         ComboBox<String> branchBox =
                 new ComboBox<>();
@@ -244,7 +259,7 @@ public class EmployeeView {
         );
 
         branchBox.setValue("Pune");
-        branchBox.setPrefWidth(260);
+        branchBox.setPrefWidth(250);
 
         Button saveBtn =
                 new Button("Save");
@@ -253,26 +268,26 @@ public class EmployeeView {
                 new Label();
 
         /*
-         Save Employee Button Action
+         Save Action
         */
+        /* ==========================================================
+   EMPLOYEEVIEW.java
+   ONLY replace save button action inside showAddPopup()
+   ========================================================== */
+
         saveBtn.setOnAction(e -> {
 
             try {
-                var client =
-                        java.net.http.HttpClient
-                                .newHttpClient();
 
-                String auth =
-                        java.util.Base64
-                                .getEncoder()
-                                .encodeToString(
-                                        (user + ":" + pass)
-                                                .getBytes()
-                                );
+                boolean yes =
+                        AlertUtil.confirm(
+                                "Create new employee?"
+                        );
 
-                /*
-                 JSON body sent to backend
-                */
+                if (!yes) {
+                    return;
+                }
+
                 String json =
                         "{"
                                 + "\"employeeCode\":\""
@@ -292,64 +307,31 @@ public class EmployeeView {
                                 + "\""
                                 + "}";
 
-                var request =
-                        java.net.http.HttpRequest
-                                .newBuilder()
-                                .uri(java.net.URI.create(ApiConfig.BASE_URL +
-                                        "/api/employees"))
-                                .header(
-                                        "Authorization",
-                                        "Basic " + auth
-                                )
-                                .header(
-                                        "Content-Type",
-                                        "application/json"
-                                )
-                                .POST(
-                                        java.net.http.HttpRequest
-                                                .BodyPublishers
-                                                .ofString(json)
-                                )
-                                .build();
+                ApiClient.post(
+                        "/api/employees",
+                        json,
+                        user,
+                        pass
+                );
 
-                var response =
-                        client.send(
-                                request,
-                                java.net.http.HttpResponse
-                                        .BodyHandlers
-                                        .ofString()
-                        );
+                AlertUtil.success(
+                        "Employee saved successfully."
+                );
 
-                if (response.statusCode() == 200
-                        || response.statusCode() == 201) {
-
-                    status.setText(
-                            "Employee Saved"
-                    );
-
-                    /* Refresh employee table */
-                    loadEmployees(
-                            table,
-                            user,
-                            pass
-                    );
-
-                } else {
-
-                    status.setText(
-                            "Save Failed"
-                    );
-                }
+                loadEmployees(
+                        table,
+                        user,
+                        pass
+                );
 
             } catch (Exception ex) {
 
-                status.setText(
-                        "Error"
+                AlertUtil.error(
+                        "Unable to save employee."
                 );
             }
         });
 
-        /* Popup Layout */
         VBox root =
                 new VBox(
                         12,
@@ -377,7 +359,11 @@ public class EmployeeView {
         );
 
         popup.setScene(
-                new Scene(root, 360, 380)
+                new Scene(
+                        root,
+                        360,
+                        380
+                )
         );
 
         popup.show();
@@ -396,41 +382,17 @@ public class EmployeeView {
         table.getItems().clear();
 
         try {
-            var client =
-                    java.net.http.HttpClient
-                            .newHttpClient();
 
-            String auth =
-                    java.util.Base64
-                            .getEncoder()
-                            .encodeToString(
-                                    (user + ":" + pass)
-                                            .getBytes()
-                            );
-
-            var request =
-                    java.net.http.HttpRequest
-                            .newBuilder()
-                            .uri(java.net.URI.create(ApiConfig.BASE_URL +
-                                    "/api/employees"))
-                            .header(
-                                    "Authorization",
-                                    "Basic " + auth
-                            )
-                            .GET()
-                            .build();
-
-            var response =
-                    client.send(
-                            request,
-                            java.net.http.HttpResponse
-                                    .BodyHandlers
-                                    .ofString()
+            String json =
+                    ApiClient.get(
+                            "/api/employees",
+                            user,
+                            pass
                     );
 
             fillTable(
                     table,
-                    response.body()
+                    json
             );
 
         } catch (Exception ex) {
@@ -452,42 +414,18 @@ public class EmployeeView {
         table.getItems().clear();
 
         try {
-            var client =
-                    java.net.http.HttpClient
-                            .newHttpClient();
 
-            String auth =
-                    java.util.Base64
-                            .getEncoder()
-                            .encodeToString(
-                                    (user + ":" + pass)
-                                            .getBytes()
-                            );
-
-            var request =
-                    java.net.http.HttpRequest
-                            .newBuilder()
-                            .uri(java.net.URI.create(ApiConfig.BASE_URL +
-                                    "/api/employees/search?keyword="
-                                            + keyword))
-                            .header(
-                                    "Authorization",
-                                    "Basic " + auth
-                            )
-                            .GET()
-                            .build();
-
-            var response =
-                    client.send(
-                            request,
-                            java.net.http.HttpResponse
-                                    .BodyHandlers
-                                    .ofString()
+            String json =
+                    ApiClient.get(
+                            "/api/employees/search?keyword="
+                                    + keyword,
+                            user,
+                            pass
                     );
 
             fillTable(
                     table,
-                    response.body()
+                    json
             );
 
         } catch (Exception ex) {
@@ -497,7 +435,7 @@ public class EmployeeView {
 
     /*
      ======================================================
-     Convert JSON response into table rows
+     Convert JSON Response To Table Rows
      ======================================================
     */
     private static void fillTable(

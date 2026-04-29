@@ -13,7 +13,7 @@ public class ApiConfig {
 
     /* Backend Base URL */
     public static final String BASE_URL =
-            "http://192.168.1.13:8080";
+            "http://10.248.171.211:8080";
 
     /* API Timeout Seconds */
     public static final int TIMEOUT_SECONDS = 15;
